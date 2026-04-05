@@ -1,0 +1,1 @@
+//// Danh sách các khu vực trong trường (Giảng đường A, B, C...) để đổ vào LocationFilter
