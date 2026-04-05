@@ -1,0 +1,1 @@
+//// Dùng để truyền trạng thái "Đã đăng nhập" và "Quyền hạn" đi khắp ứng dụng mà không cần prop drilling.

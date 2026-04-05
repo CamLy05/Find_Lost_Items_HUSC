@@ -1,0 +1,22 @@
+{
+  "users": [
+    { "id": 1, "username": "admin", "password": "123", "role": "admin" },
+    { "id": 2, "username": "sinhvien1", "password": "123", "role": "student" }
+  ],
+  "items": [
+    {
+      "id": "101",
+      "name": "Ví sen màu nâu",
+      "category": "Ví tiền",
+      "location": "Thư viện",
+      "date": "2024-03-20",
+      "status": "approved",
+      "description": "Nhặt được ở tầng 2, gần máy tính",
+      "finderId": 2
+    }
+  ],
+  "notifications": [
+    { "id": 1, "userId": 2, "message": "Bài đăng của bạn đã được duyệt!", "isRead": false }
+  ],
+  "messages": []
+}
