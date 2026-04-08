@@ -1,19 +1,23 @@
-// import { Navigate } from 'react-router-dom';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '@/context/AppContext.jsx';
 
-// const ProtectedRoute = ({ children, allowedRoles }) => {
-//   const user = JSON.parse(localStorage.getItem('user'));
+const ProtectedRoute = ({ children, requiredRole }) => {
+    const { isAuthenticated, userRole } = useAuth();
 
-//   // Nếu chưa đăng nhập, đá về trang Login
-//   if (!user) {
-//     return <Navigate to="/login" replace />;
-//   }
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
 
-//   // Nếu role không phù hợp, đá về trang Home
-//   if (!allowedRoles.includes(user.role)) {
-//     return <Navigate to="/home" replace />;
-//   }
+    if (requiredRole && userRole !== requiredRole) {
+        // Redirect to appropriate dashboard based on role
+        if (userRole === 'admin') {
+            return <Navigate to="/admin-dashboard" replace />;
+        }
+        return <Navigate to="/student-dashboard" replace />;
+    }
 
-//   return children;
-// };
+    return children;
+};
 
-// export default ProtectedRoute;
+export default ProtectedRoute;
