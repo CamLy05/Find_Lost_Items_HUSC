@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Cần có useEffect ở đây
 import { useAuth } from '@/context/AppContext.jsx';
 import pb from '@/lib/pocketbase';
 import { Button } from '@/components/ui/button';
@@ -9,11 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Upload, X } from 'lucide-react';
 
-const LostItemForm = ({ onSuccess, onCancel }) => {
+const LostItemForm = ({ onSuccess, onCancel, initialData }) => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
-  
+
   const initialFormState = {
     item_name: '',
     description: '',
@@ -24,8 +24,44 @@ const LostItemForm = ({ onSuccess, onCancel }) => {
     phone: '',
     email: currentUser?.email || '',
   };
-  
+
   const [formData, setFormData] = useState(initialFormState);
+
+  // Cập nhật dữ liệu khi vào chế độ chỉnh sửa
+  useEffect(() => {
+    if (initialData) {
+      const formatDateForInput = (dateStr) => {
+        if (!dateStr) return '';
+        try {
+          // PocketBase trả về YYYY-MM-DD HH:mm:ss, input date chỉ nhận YYYY-MM-DD
+          const d = new Date(dateStr);
+          return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
+        } catch (e) {
+          return '';
+        }
+      };
+
+      setFormData({
+        item_name: initialData.item_name || '',
+        description: initialData.description || '',
+        location: initialData.location || '',
+        lost_date: formatDateForInput(initialData.lost_date),
+        category: initialData.category || 'other',
+        image: null,
+        phone: initialData.phone || '',
+        email: initialData.email || currentUser?.email || '',
+      });
+
+      if (initialData.image) {
+        setImagePreview(pb.files.getURL(initialData, initialData.image));
+      }
+    } else {
+      setFormData(initialFormState);
+      setImagePreview(null);
+    }
+  }, [initialData, currentUser]);
+
+  if (!currentUser) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -45,9 +81,7 @@ const LostItemForm = ({ onSuccess, onCancel }) => {
       }
       setFormData(prev => ({ ...prev, image: file }));
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
+      reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
@@ -57,53 +91,38 @@ const LostItemForm = ({ onSuccess, onCancel }) => {
     setImagePreview(null);
   };
 
-  const validateForm = () => {
-    if (!formData.item_name.trim()) return 'Vui lòng nhập tên đồ vật';
-    if (!formData.description.trim()) return 'Vui lòng nhập mô tả chi tiết';
-    if (!formData.location.trim()) return 'Vui lòng nhập địa điểm';
-    if (!formData.lost_date) return 'Vui lòng chọn ngày';
-    if (!formData.phone.trim()) return 'Vui lòng nhập số điện thoại';
-    if (!formData.email.trim()) return 'Vui lòng nhập email';
-    if (!formData.category) return 'Vui lòng chọn danh mục';
-    return null;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const error = validateForm();
-    if (error) {
-      toast.error(error);
-      return;
-    }
-
     setLoading(true);
 
     try {
       const data = new FormData();
       data.append('user_id', currentUser.id);
-      data.append('item_name', formData.item_name.trim());
-      data.append('description', formData.description.trim());
-      data.append('location', formData.location.trim());
+      data.append('item_name', String(formData.item_name || "").trim());
+      data.append('description', String(formData.description || "").trim());
+      data.append('location', String(formData.location || "").trim());
       data.append('lost_date', formData.lost_date);
       data.append('category', formData.category);
-      data.append('phone', formData.phone.trim());
-      data.append('email', formData.email.trim());
+      data.append('phone', String(formData.phone || "").trim());
+      data.append('email', String(formData.email || "").trim());
       data.append('status', 'pending');
-      
+
       if (formData.image) {
         data.append('image', formData.image);
       }
 
-      await pb.collection('lost_items').create(data, { $autoCancel: false });
-      
-      toast.success('Đã gửi bài đăng thành công. Chờ quản trị viên phê duyệt.');
-      setFormData(initialFormState);
-      setImagePreview(null);
+      if (initialData?.id) {
+        await pb.collection('lost_items').update(initialData.id, data);
+        toast.success('Cập nhật bài đăng thành công!');
+      } else {
+        await pb.collection('lost_items').create(data);
+        toast.success('Đăng bài thành công. Chờ phê duyệt.');
+      }
+
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error('Error creating post:', error);
-      toast.error('Không thể tạo bài đăng. Vui lòng thử lại.');
+      console.error(error);
+      toast.error('Có lỗi xảy ra, vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -113,15 +132,7 @@ const LostItemForm = ({ onSuccess, onCancel }) => {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <Label htmlFor="item_name">Tên đồ vật *</Label>
-        <Input
-          id="item_name"
-          name="item_name"
-          value={formData.item_name}
-          onChange={handleChange}
-          required
-          placeholder="Ví dụ: Ví da màu nâu"
-          className="mt-1.5"
-        />
+        <Input id="item_name" name="item_name" value={formData.item_name} onChange={handleChange} required className="mt-1.5" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -133,7 +144,7 @@ const LostItemForm = ({ onSuccess, onCancel }) => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="find">Tìm đồ</SelectItem>
-              <SelectItem value="lost">Mất đồ</SelectItem>
+              <SelectItem value="lost">Nhặt đồ</SelectItem>
               <SelectItem value="other">Khác</SelectItem>
             </SelectContent>
           </Select>
@@ -141,70 +152,32 @@ const LostItemForm = ({ onSuccess, onCancel }) => {
 
         <div>
           <Label htmlFor="lost_date">Ngày mất/nhặt được *</Label>
-          <Input
-            id="lost_date"
-            name="lost_date"
-            type="date"
-            value={formData.lost_date}
-            onChange={handleChange}
-            required
-            max={new Date().toISOString().split('T')[0]}
-            className="mt-1.5"
-          />
+          <Input id="lost_date" name="lost_date" type="date" value={formData.lost_date} onChange={handleChange} required className="mt-1.5" />
         </div>
       </div>
 
       <div>
         <Label htmlFor="description">Mô tả chi tiết *</Label>
-        <Textarea
-          id="description"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          required
-          placeholder="Mô tả chi tiết về đồ vật (màu sắc, kích thước, đặc điểm nhận dạng...)"
-          rows={4}
-          className="mt-1.5"
-        />
+        <Textarea id="description" name="description" value={formData.description} onChange={handleChange} required rows={4} className="mt-1.5" />
       </div>
 
       <div>
         <Label htmlFor="location">Địa điểm *</Label>
-        <Input
-          id="location"
-          name="location"
-          value={formData.location}
-          onChange={handleChange}
-          required
-          placeholder="Ví dụ: Thư viện tầng 2"
-          className="mt-1.5"
-        />
+        <Input id="location" name="location" value={formData.location} onChange={handleChange} required className="mt-1.5" />
       </div>
 
       <div>
-        <Label htmlFor="image">Hình ảnh (tùy chọn)</Label>
+        <Label>Hình ảnh</Label>
         <div className="mt-1.5">
           {!imagePreview ? (
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-primary transition-colors">
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-primary">
               <Upload className="w-8 h-8 text-slate-400 mb-2" />
-              <span className="text-sm text-slate-500">Nhấn để tải ảnh lên</span>
-              <span className="text-xs text-slate-400 mt-1">PNG, JPG, GIF, WebP (tối đa 20MB)</span>
-              <input
-                id="image"
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp"
-                onChange={handleImageChange}
-                className="hidden"
-              />
+              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
             </label>
           ) : (
             <div className="relative">
-              <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover rounded-xl" />
-              <button
-                type="button"
-                onClick={removeImage}
-                className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-lg hover:bg-destructive/90 transition-colors"
-              >
+              <img src={imagePreview} className="w-full h-48 object-cover rounded-xl" />
+              <button type="button" onClick={removeImage} className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-lg">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -215,40 +188,19 @@ const LostItemForm = ({ onSuccess, onCancel }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="phone">Số điện thoại *</Label>
-          <Input
-            id="phone"
-            name="phone"
-            type="tel"
-            value={formData.phone}
-            onChange={handleChange}
-            required
-            placeholder="0123456789"
-            className="mt-1.5"
-          />
+          <Input id="phone" name="phone" value={formData.phone} onChange={handleChange} required />
         </div>
-
         <div>
           <Label htmlFor="email">Email *</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            placeholder="email@example.com"
-            className="mt-1.5"
-          />
+          <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required />
         </div>
       </div>
 
       <div className="flex gap-3 pt-4">
         <Button type="submit" disabled={loading} className="flex-1">
-          {loading ? 'Đang gửi...' : 'Đăng bài'}
+          {loading ? 'Đang xử lý...' : initialData ? 'Cập nhật' : 'Đăng bài'}
         </Button>
-        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
-          Hủy
-        </Button>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>Hủy</Button>
       </div>
     </form>
   );

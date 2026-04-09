@@ -37,7 +37,7 @@ const EditLostItemModal = ({ item, isOpen, onClose, onSuccess }) => {
             });
 
             if (item.image) {
-                setImagePreview(pb.files.getUrl(item, item.image));
+                setImagePreview(pb.files.getURL(item, item.image));
             } else {
                 setImagePreview(null);
             }
@@ -162,7 +162,7 @@ const EditLostItemModal = ({ item, isOpen, onClose, onSuccess }) => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="find">Tìm đồ</SelectItem>
-                                    <SelectItem value="lost">Mất đồ</SelectItem>
+                                    <SelectItem value="lost">Nhặt đồ</SelectItem>
                                     <SelectItem value="other">Khác</SelectItem>
                                 </SelectContent>
                             </Select>
