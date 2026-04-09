@@ -7,11 +7,13 @@ import Header from '@/components/Header.jsx';
 import Footer from '@/components/Footer.jsx';
 import LostItemForm from '@/components/LostItemForm.jsx';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Plus, MapPin, Calendar, Phone, Mail, Trash2, Package, Bell, HelpCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { Edit3, Plus, MapPin, Calendar, Phone, Mail, Trash2, Package, Bell, HelpCircle } from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns'; // Thêm formatDistanceToNow
+import { vi } from 'date-fns/locale'; // Thêm locale tiếng Việt
+import AdminSearchAndFilterBar from '@/components/AdminSearchAndFilterBar.jsx';
 
 const StudentDashboard = () => {
     const { currentUser } = useAuth();
@@ -20,6 +22,20 @@ const StudentDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
 
+    const [filteredApprovedItems, setFilteredApprovedItems] = useState([]);
+
+    const [editingItem, setEditingItem] = useState(null);
+    const handleFormSuccess = () => {
+        setShowForm(false);
+        setEditingItem(null); // Reset trạng thái sửa
+        fetchItems();
+    };
+
+    // 2. Hàm xử lý khi nhấn nút Sửa
+    const handleEdit = (item) => {
+        setEditingItem(item);
+        setShowForm(true);
+    };
     const fetchItems = async () => {
         setLoading(true);
         try {
@@ -31,6 +47,8 @@ const StudentDashboard = () => {
             });
             setApprovedItems(approved);
 
+            // 2. Khởi tạo giá trị ban đầu cho danh sách lọc
+            setFilteredApprovedItems(approved);
             // Fetch current user's posts
             const myItems = await pb.collection('lost_items').getFullList({
                 filter: `user_id = "${currentUser.id}"`,
@@ -50,10 +68,6 @@ const StudentDashboard = () => {
         fetchItems();
     }, [currentUser.id]);
 
-    const handleFormSuccess = () => {
-        setShowForm(false);
-        fetchItems();
-    };
 
     const handleDelete = async (id) => {
         if (!window.confirm('Bạn có chắc muốn xóa bài đăng này?')) {
@@ -91,6 +105,7 @@ const StudentDashboard = () => {
         try {
             const d = new Date(dateStr);
             if (isNaN(d.getTime())) return "Ngày không xác định";
+            // Nếu không có 'vi' ở đây, nó sẽ crash toàn bộ dashboard
             return formatDistanceToNow(d, { addSuffix: true, locale: vi });
         } catch (error) {
             return "Vừa xong";
@@ -100,7 +115,7 @@ const StudentDashboard = () => {
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
             {item.image && (
                 <img
-                    src={pb.files.getUrl(item, item.image)}
+                    src={pb.files.getURL(item, item.image)}
                     alt={item.item_name}
                     className="w-full h-48 object-cover"
                 />
@@ -120,7 +135,15 @@ const StudentDashboard = () => {
                     </div>
                     <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 flex-shrink-0" />
-                        <span>{displayDate(item.created_at || item.created)}</span>
+                        {(() => {
+                            try {
+                                const d = new Date(item.created_at || item.created);
+                                if (isNaN(d.getTime())) return "Chưa có ngày";
+                                return format(d, "dd/MM/yyyy HH:mm");
+                            } catch (e) {
+                                return "Ngày lỗi";
+                            }
+                        })()}
                     </div>
                 </div>
 
@@ -140,15 +163,26 @@ const StudentDashboard = () => {
                 </div>
 
                 {showActions && (
-                    <div className="mt-auto pt-4 border-t border-slate-200">
+                    <div className="mt-auto pt-4 border-t border-slate-200 flex gap-2">
+                        {/* 3. Thêm nút Chỉnh sửa */}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(item)}
+                            className="flex-1 gap-2 border-slate-200 hover:bg-slate-50"
+                        >
+                            <Edit3 className="w-4 h-4 text-blue-600" />
+                            Sửa bài đăng
+                        </Button>
+
                         <Button
                             variant="destructive"
                             size="sm"
                             onClick={() => handleDelete(item.id)}
-                            className="w-full gap-2"
+                            className="flex-1 gap-2"
                         >
                             <Trash2 className="w-4 h-4" />
-                            Xóa bài đăng
+                            Xóa
                         </Button>
                     </div>
                 )}
@@ -193,6 +227,14 @@ const StudentDashboard = () => {
                                     Đăng bài mới
                                 </Button>
                             </div>
+                        </div>
+
+                        <div className="mb-8">
+                            <AdminSearchAndFilterBar
+                                items={approvedItems}
+                                onFilterChange={setFilteredApprovedItems}
+                                resultCount={filteredApprovedItems.length}
+                            />
                         </div>
 
                         {/* My Posts Section */}
@@ -242,15 +284,14 @@ const StudentDashboard = () => {
                                         </div>
                                     ))}
                                 </div>
-                            ) : approvedItems.length === 0 ? (
+                            ) : filteredApprovedItems.length === 0 ? (
                                 <div className="empty-state">
                                     <Package className="w-16 h-16 text-slate-300 mb-4" />
-                                    <h3 className="text-lg font-medium text-slate-900 mb-2">Chưa có bài đăng nào</h3>
-                                    <p className="text-slate-600">Hiện chưa có bài đăng nào được phê duyệt.</p>
+                                    <h3 className="text-lg font-medium text-slate-900">Không tìm thấy kết quả</h3>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {approvedItems.map((item) => (
+                                    {filteredApprovedItems.map((item) => (
                                         <ItemCard key={item.id} item={item} />
                                     ))}
                                 </div>
@@ -261,13 +302,33 @@ const StudentDashboard = () => {
 
                 <Footer />
 
-                {/* New Post Dialog */}
-                <Dialog open={showForm} onOpenChange={setShowForm}>
+                <Dialog
+                    open={showForm}
+                    onOpenChange={(open) => {
+                        setShowForm(open);
+                        if (!open) setEditingItem(null); // Reset khi đóng dialog
+                    }}
+                >
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>Đăng bài tìm đồ mới</DialogTitle>
+                            <DialogTitle>
+                                {editingItem ? 'Chỉnh sửa bài đăng' : 'Đăng bài tìm đồ mới'}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {editingItem
+                                    ? 'Cập nhật lại thông tin chính xác cho bài đăng của bạn.'
+                                    : 'Vui lòng điền đầy đủ thông tin chi tiết về món đồ để mọi người dễ dàng nhận diện.'}
+                            </DialogDescription>
                         </DialogHeader>
-                        <LostItemForm onSuccess={handleFormSuccess} onCancel={() => setShowForm(false)} />
+
+                        <LostItemForm
+                            initialData={editingItem} // Truyền dữ liệu cũ vào form
+                            onSuccess={handleFormSuccess}
+                            onCancel={() => {
+                                setShowForm(false);
+                                setEditingItem(null);
+                            }}
+                        />
                     </DialogContent>
                 </Dialog>
             </div>

@@ -193,7 +193,7 @@ const AdminDashboard = () => {
                                                 {item.image && (
                                                     <div className="lg:col-span-3">
                                                         <img
-                                                            src={pb.files.getUrl(item, item.image)}
+                                                            src={pb.files.getURL(item, item.image)}
                                                             alt={item.item_name}
                                                             className="w-full h-48 lg:h-full object-cover rounded-lg"
                                                         />
