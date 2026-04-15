@@ -11,7 +11,7 @@ import StudentDashboard from './pages/StudentDashboard/index.jsx';
 import AdminDashboard from './pages/AdminDashboard/index.jsx';
 import NotificationsPage from './pages/NotificationsPage/index.jsx';
 import QAPage from './pages/QAPages/index.jsx';
-
+import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage/index.jsx';
 function App() {
   return (
     <Router>
@@ -21,7 +21,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           {/* Protected Routes for all authenticated users */}
           <Route
             path="/qa"
