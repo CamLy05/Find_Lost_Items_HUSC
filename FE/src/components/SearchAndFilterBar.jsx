@@ -81,7 +81,7 @@ const SearchAndFilterBar = ({
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Tất cả</SelectItem>
-                            <SelectItem value="find">Tìm đồ</SelectItem>
+                            <SelectItem value="found">Tìm đồ</SelectItem>
                             <SelectItem value="lost">Nhặt đồ</SelectItem>
                             <SelectItem value="other">Khác</SelectItem>
                         </SelectContent>
