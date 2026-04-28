@@ -15,7 +15,7 @@ const EditLostItemModal = ({ item, isOpen, onClose, onSuccess }) => {
     const [formData, setFormData] = useState({
         item_name: '',
         description: '',
-        location: '',
+        location: 'Nơi Khác',
         lost_date: '',
         category: 'other',
         phone: '',
@@ -28,7 +28,7 @@ const EditLostItemModal = ({ item, isOpen, onClose, onSuccess }) => {
             setFormData({
                 item_name: item.item_name || '',
                 description: item.description || '',
-                location: item.location || '',
+                location: item.location || 'Nơi Khác',
                 lost_date: item.lost_date ? item.lost_date.split('T')[0] : '',
                 category: item.category || 'other',
                 phone: item.phone || '',
@@ -52,7 +52,9 @@ const EditLostItemModal = ({ item, isOpen, onClose, onSuccess }) => {
     const handleCategoryChange = (value) => {
         setFormData(prev => ({ ...prev, category: value }));
     };
-
+    const handleLocationChange = (value) => {
+        setFormData(prev => ({ ...prev, location: value }));
+    };
     const handleImageChange = (e) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -161,7 +163,7 @@ const EditLostItemModal = ({ item, isOpen, onClose, onSuccess }) => {
                                     <SelectValue placeholder="Chọn danh mục" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="find">Tìm đồ</SelectItem>
+                                    <SelectItem value="found">Tìm đồ</SelectItem>
                                     <SelectItem value="lost">Nhặt đồ</SelectItem>
                                     <SelectItem value="other">Khác</SelectItem>
                                 </SelectContent>
@@ -196,15 +198,30 @@ const EditLostItemModal = ({ item, isOpen, onClose, onSuccess }) => {
                     </div>
 
                     <div>
-                        <Label htmlFor="location">Địa điểm *</Label>
-                        <Input
-                            id="location"
-                            name="location"
-                            value={formData.location}
-                            onChange={handleChange}
-                            required
-                            className="mt-1.5"
-                        />
+                        <Label htmlFor="location">Địa điểm*</Label>
+                        <Select value={formData.location} onValueChange={handleLocationChange}>
+                            <SelectTrigger className="mt-1.5">
+                                <SelectValue placeholder="Chọn địa điểm" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Tòa A">Tòa A</SelectItem>
+                                <SelectItem value="Tòa H">Tòa H</SelectItem>
+                                <SelectItem value="Tòa E">Tòa E</SelectItem>
+                                <SelectItem value="Nhà Xe">Nhà Xe</SelectItem>
+                                <SelectItem value="Sân Trường">Sân Trường</SelectItem>
+                                <SelectItem value="Tòa F">Tòa F</SelectItem>
+                                <SelectItem value="other">Nơi khác</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        {/* Nếu chọn "Nơi khác", hiện thêm ô nhập tay */}
+                        {formData.location === 'other' && (
+                            <Input
+                                className="mt-2"
+                                placeholder="Nhập địa điểm cụ thể..."
+                                onChange={(e) => setFormData({ ...formData, customLocation: e.target.value })}
+                            />
+                        )}
                     </div>
 
                     <div>

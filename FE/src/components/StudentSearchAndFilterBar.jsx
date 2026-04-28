@@ -3,14 +3,16 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, X, Filter } from 'lucide-react';
-import { isToday, isThisWeek, isThisMonth, parseISO } from 'date-fns';
+import { isToday, isThisWeek, isThisMonth, parseISO, set } from 'date-fns';
 
-const AdminSearchAndFilterBar = ({ items, onFilterChange, resultCount }) => {
+const StudentSearchAndFilterBar = ({ items, onFilterChange, resultCount }) => {
     const [search, setSearch] = useState('');
-    const [status, setStatus] = useState('all');
+    const [item_name, setItemName] = useState('all');
     const [dateRange, setDateRange] = useState('all');
     const [location, setLocation] = useState('all');
+    const [category, setCategory] = useState('all');
 
+    // Extract unique locations from items
     const uniqueLocations = useMemo(() => {
         const locs = new Set(items.map(item => item.location).filter(Boolean));
         return Array.from(locs).sort();
@@ -19,33 +21,32 @@ const AdminSearchAndFilterBar = ({ items, onFilterChange, resultCount }) => {
     useEffect(() => {
         const handler = setTimeout(() => {
             const filtered = items.filter(item => {
-                // 1. Xử lý từ khóa tìm kiếm (Chuẩn hóa về chữ thường và xóa khoảng trắng thừa)
+                // 1. CHUẨN BỊ DỮ LIỆU (Đổi tên biến để không trùng với State)
                 const searchLower = search.toLowerCase().trim();
-
-                // Lấy các trường dữ liệu cần tìm (Lưu ý: dùng name_id hoặc user_id tùy DB của bạn)
-                const itemName = (item.item_name || "").toLowerCase();
-                const description = (item.description || "").toLowerCase();
+                const itemCatData = (item.category || "").toLowerCase();
+                const itemNameData = (item.item_name || "").toLowerCase();
+                const itemDescData = (item.description || "").toLowerCase();
                 const userName = (item.expand?.user_id?.name || item.expand?.name_id?.name || "").toLowerCase();
-                const userEmail = (item.expand?.user_id?.email || item.expand?.name_id?.email || "").toLowerCase();
-                const phone = String(item.phone || "");
 
-                // Kiểm tra nếu từ khóa xuất hiện trong bất kỳ trường nào bên dưới
-                const matchesSearch = !searchLower ||
-                    itemName.includes(searchLower) ||
-                    description.includes(searchLower) ||
+                // 2. LOGIC TÌM KIẾM 
+                const matchesSearch = !search ||
+                    itemNameData.includes(searchLower) ||
+                    itemCatData.includes(searchLower) ||
+                    itemDescData.includes(searchLower) ||
                     userName.includes(searchLower) ||
-                    userEmail.includes(searchLower) ||
                     String(item.phone || "").includes(searchLower);
 
-                // 2. Lọc theo trạng thái
-                const matchesStatus = status === 'all' || item.status === status;
+                // 3. LOGIC LỌC DROPDOWN (Quan trọng: So sánh item.category với state category)
+                const matchesItemName = item_name === 'all' || item.item_name === item_name;
 
-                // 3. Lọc theo địa điểm
+                // ĐÃ SỬA: Không khai báo biến 'category' ở đây nữa
+                const matchesCategory = category === 'all' || item.category === category;
+
                 const matchesLocation = location === 'all' || item.location === location;
 
-                // 4. Lọc theo thời gian đăng
+                // 4. LOGIC LỌC NGÀY
                 let matchesDate = true;
-                const dateField = item.created_at || item.created; // Đảm bảo lấy đúng field ngày của PocketBase
+                const dateField = item.created_at || item.created;
                 if (dateRange !== 'all' && dateField) {
                     const itemDate = parseISO(dateField);
                     if (dateRange === 'today') matchesDate = isToday(itemDate);
@@ -53,23 +54,26 @@ const AdminSearchAndFilterBar = ({ items, onFilterChange, resultCount }) => {
                     else if (dateRange === 'month') matchesDate = isThisMonth(itemDate);
                 }
 
-                return matchesSearch && matchesStatus && matchesLocation && matchesDate;
+                // 5. TRẢ VỀ KẾT QUẢ (Đã thêm matchesCategory)
+                return matchesSearch && matchesItemName && matchesLocation && matchesDate && matchesCategory;
             });
 
             onFilterChange(filtered);
         }, 300);
 
         return () => clearTimeout(handler);
-    }, [search, status, dateRange, location, items, onFilterChange]);
+
+    }, [search, item_name, dateRange, category, location, items, onFilterChange]);
 
     const handleReset = () => {
         setSearch('');
-        setStatus('all');
+        setItemName('all');
         setDateRange('all');
         setLocation('all');
+        setCategory('all');
     };
 
-    const hasActiveFilters = search.trim() !== '' || status !== 'all' || dateRange !== 'all' || location !== 'all';
+    const hasActiveFilters = search || item_name !== 'all' || dateRange !== 'all' || location !== 'all' || category !== 'all';
 
     return (
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 space-y-4">
@@ -77,7 +81,7 @@ const AdminSearchAndFilterBar = ({ items, onFilterChange, resultCount }) => {
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input
-                        placeholder="Tìm theo tên đồ, người đăng, sđt..."
+                        placeholder="Tìm kiếm theo tên đồ vật, người đăng, số điện thoại..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-9"
@@ -85,21 +89,23 @@ const AdminSearchAndFilterBar = ({ items, onFilterChange, resultCount }) => {
                 </div>
 
                 <div className="flex flex-wrap md:flex-nowrap gap-3">
-                    <Select value={status} onValueChange={setStatus}>
+                    <Select value={item_name} onValueChange={setItemName}>
                         <SelectTrigger className="w-[140px]">
-                            <SelectValue placeholder="Trạng thái" />
+                            <SelectValue placeholder="Tên Đồ Vật" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                            <SelectItem value="pending">Chờ duyệt</SelectItem>
-                            <SelectItem value="approved">Đã duyệt</SelectItem>
-                            <SelectItem value="rejected">Từ chối</SelectItem>
+                            <SelectItem value="all">Tên Đồ Vật</SelectItem>
+                            <SelectItem value="Ví">Ví</SelectItem>
+                            <SelectItem value="Thẻ xe">Thẻ xe</SelectItem>
+                            <SelectItem value="Giấy tờ">Giấy tờ</SelectItem>
+                            <SelectItem value="Điện thoại">Điện thoại</SelectItem>
+                            <SelectItem value="Khác">Khác</SelectItem>
                         </SelectContent>
                     </Select>
 
                     <Select value={dateRange} onValueChange={setDateRange}>
                         <SelectTrigger className="w-[140px]">
-                            <SelectValue placeholder="Thời gian" />
+                            <SelectValue placeholder="Thời gian đăng" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Mọi lúc</SelectItem>
@@ -109,6 +115,17 @@ const AdminSearchAndFilterBar = ({ items, onFilterChange, resultCount }) => {
                         </SelectContent>
                     </Select>
 
+                    <Select value={category} onValueChange={setCategory}>
+                        <SelectTrigger className="w-[140px]">
+                            <SelectValue placeholder="Danh mục" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Danh mục</SelectItem>
+                            <SelectItem value="lost">Mất</SelectItem>
+                            <SelectItem value="found">Tìm thấy</SelectItem>
+                            <SelectItem value="other">Khác</SelectItem>
+                        </SelectContent>
+                    </Select>
                     <Select value={location} onValueChange={setLocation}>
                         <SelectTrigger className="w-[160px]">
                             <SelectValue placeholder="Địa điểm" />
@@ -121,7 +138,7 @@ const AdminSearchAndFilterBar = ({ items, onFilterChange, resultCount }) => {
                             <SelectItem value="Nhà Xe">Nhà Xe</SelectItem>
                             <SelectItem value="Sân Trường">Sân Trường</SelectItem>
                             <SelectItem value="Tòa F">Tòa F</SelectItem>
-                            <SelectItem value="Nơi khác">Nơi khác</SelectItem>
+                            <SelectItem value="Nơi Khác">Nơi khác</SelectItem>
                         </SelectContent>
                     </Select>
 
@@ -145,10 +162,11 @@ const AdminSearchAndFilterBar = ({ items, onFilterChange, resultCount }) => {
                 {hasActiveFilters && (
                     <span className="text-xs italic text-slate-400">
                         Đang lọc theo: {[
-                            search.trim() && 'từ khóa',
-                            status !== 'all' && 'trạng thái',
+                            search && 'từ khóa',
+                            item_name !== 'all' && 'tên đồ vật',
                             location !== 'all' && 'địa điểm',
-                            dateRange !== 'all' && 'thời gian'
+                            dateRange !== 'all' && 'thời gian',
+                            category !== 'all' && 'danh mục'
                         ].filter(Boolean).join(', ')}
                     </span>
                 )}
@@ -157,4 +175,4 @@ const AdminSearchAndFilterBar = ({ items, onFilterChange, resultCount }) => {
     );
 };
 
-export default AdminSearchAndFilterBar;
+export default StudentSearchAndFilterBar;

@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { Edit3, Plus, MapPin, Calendar, Phone, Mail, Trash2, Package, Bell, HelpCircle } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns'; // Thêm formatDistanceToNow
 import { vi } from 'date-fns/locale'; // Thêm locale tiếng Việt
-import AdminSearchAndFilterBar from '@/components/AdminSearchAndFilterBar.jsx';
+import StudentSearchAndFilterBar from '@/components/StudentSearchAndFilterBar.jsx';
 
 const StudentDashboard = () => {
     const { currentUser } = useAuth();
@@ -230,16 +230,44 @@ const StudentDashboard = () => {
                         </div>
 
                         <div className="mb-8">
-                            <AdminSearchAndFilterBar
+                            <StudentSearchAndFilterBar
                                 items={approvedItems}
                                 onFilterChange={setFilteredApprovedItems}
                                 resultCount={filteredApprovedItems.length}
                             />
                         </div>
 
+                        {/* Approved Items Section */}
+                        <section>
+                            <h2 className="text-2xl font-semibold text-slate-900 mb-6"></h2>
+                            {loading ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {filteredApprovedItems.map((item, i) => (
+                                        <div key={i} className="bg-white rounded-xl p-6 border border-slate-200">
+                                            <Skeleton className="h-48 w-full mb-4" />
+                                            <Skeleton className="h-6 w-3/4 mb-2" />
+                                            <Skeleton className="h-4 w-full mb-4" />
+                                            <Skeleton className="h-4 w-1/2" />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : filteredApprovedItems.length === 0 ? (
+                                <div className="empty-state">
+                                    <Package className="w-16 h-16 text-slate-300 mb-4" />
+                                    <h3 className="text-lg font-medium text-slate-900">Không tìm thấy kết quả</h3>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {filteredApprovedItems.map((item) => (
+                                        <ItemCard key={item.id} item={item} />
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+
                         {/* My Posts Section */}
                         <section className="mb-12">
-                            <h2 className="text-2xl font-semibold text-slate-900 mb-6">Bài đăng của tôi</h2>
+                            <h2 className="text-2xl font-semibold text-slate-900 mb-6 mt-8" style={{ color: 'red' }}>Bài đăng của tôi</h2>
                             {loading ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {[1, 2, 3].map((i) => (
@@ -265,34 +293,6 @@ const StudentDashboard = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {myPosts.map((item) => (
                                         <ItemCard key={item.id} item={item} showActions={true} />
-                                    ))}
-                                </div>
-                            )}
-                        </section>
-
-                        {/* Approved Items Section */}
-                        <section>
-                            <h2 className="text-2xl font-semibold text-slate-900 mb-6">Đồ thất lạc đã được phê duyệt</h2>
-                            {loading ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                                        <div key={i} className="bg-white rounded-xl p-6 border border-slate-200">
-                                            <Skeleton className="h-48 w-full mb-4" />
-                                            <Skeleton className="h-6 w-3/4 mb-2" />
-                                            <Skeleton className="h-4 w-full mb-4" />
-                                            <Skeleton className="h-4 w-1/2" />
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : filteredApprovedItems.length === 0 ? (
-                                <div className="empty-state">
-                                    <Package className="w-16 h-16 text-slate-300 mb-4" />
-                                    <h3 className="text-lg font-medium text-slate-900">Không tìm thấy kết quả</h3>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {filteredApprovedItems.map((item) => (
-                                        <ItemCard key={item.id} item={item} />
                                     ))}
                                 </div>
                             )}

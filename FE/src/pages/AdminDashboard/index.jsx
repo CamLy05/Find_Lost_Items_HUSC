@@ -30,12 +30,13 @@ const AdminDashboard = () => {
             const allItems = await pb.collection('lost_items').getFullList({
                 sort: '-created_at',
                 expand: 'user_id',
-                $autoCancel: false,
-            });
-            setItems(allItems);
-            setFilteredItems(allItems);
 
-            // Calculate stats
+            });
+
+            // Cập nhật cả 2 state
+            setItems(allItems);
+            setFilteredItems(allItems); // Quan trọng: Khởi tạo danh sách hiển thị ban đầu
+
             setStats({
                 total: allItems.length,
                 approved: allItems.filter(item => item.status === 'approved').length,
@@ -52,6 +53,7 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         fetchItems();
+
     }, []);
 
     const handleApprove = async (id) => {
@@ -167,11 +169,11 @@ const AdminDashboard = () => {
 
                         {/* Items List */}
                         <section>
-                            <h2 className="text-2xl font-semibold text-slate-900 mb-6">Danh sách bài đăng</h2>
+                            <h2 className="text-2xl font-semibold text-slate-900 mb-6"></h2>
                             {loading ? (
                                 <div className="space-y-4">
-                                    {[1, 2, 3, 4].map((i) => (
-                                        <div key={i} className="bg-white rounded-xl p-6 border border-slate-200">
+                                    {filteredItems.map((item) => (
+                                        <div key={item.id} className="bg-white rounded-xl p-6 border border-slate-200">
                                             <Skeleton className="h-6 w-1/3 mb-4" />
                                             <Skeleton className="h-4 w-full mb-2" />
                                             <Skeleton className="h-4 w-2/3" />
@@ -182,7 +184,7 @@ const AdminDashboard = () => {
                                 <div className="empty-state">
                                     <Package className="w-16 h-16 text-slate-300 mb-4" />
                                     <h3 className="text-lg font-medium text-slate-900 mb-2">Không tìm thấy bài đăng</h3>
-                                    <p className="text-slate-600">Không có bài đăng nào khớp với điều kiện lọc.</p>
+                                    <p className="text-slate-600">Vui lòng thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
@@ -237,7 +239,10 @@ const AdminDashboard = () => {
                                                     </div>
 
                                                     <div className="mt-4 pt-4 border-t border-slate-100 text-sm text-slate-500">
-                                                        Người đăng: <span className="font-medium text-slate-900">{item.expand?.user_id?.name || item.expand?.user_id?.email || 'Không rõ'}</span>
+                                                        Người đăng: {" "}
+                                                        <span className="font-medium text-slate-900">
+                                                            {item.expand?.user_id?.name || item.expand?.user_id?.email || 'Người dùng hệ thống'}
+                                                        </span>
                                                     </div>
                                                 </div>
 

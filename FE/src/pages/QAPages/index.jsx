@@ -110,7 +110,7 @@ const QAPage = () => {
   };
 
   const getCategoryLabel = (cat) => {
-    const labels = { find: 'Tìm đồ', lost: 'Nhặt đồ', other: 'Khác' };
+    const labels = { found: 'Tìm đồ', lost: 'Nhặt đồ', other: 'Khác' };
     return labels[cat] || 'Khác';
   };
 
@@ -165,7 +165,7 @@ const QAPage = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="find">Tìm đồ</SelectItem>
+                          <SelectItem value="found">Tìm đồ</SelectItem>
                           <SelectItem value="lost">Nhặt đồ</SelectItem>
                           <SelectItem value="other">Khác</SelectItem>
                         </SelectContent>

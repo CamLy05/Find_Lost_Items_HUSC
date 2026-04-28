@@ -71,7 +71,9 @@ const LostItemForm = ({ onSuccess, onCancel, initialData }) => {
   const handleCategoryChange = (value) => {
     setFormData(prev => ({ ...prev, category: value }));
   };
-
+  const handleLocationChange = (value) => {
+    setFormData(prev => ({ ...prev, location: value }));
+  };
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -143,7 +145,7 @@ const LostItemForm = ({ onSuccess, onCancel, initialData }) => {
               <SelectValue placeholder="Chọn danh mục" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="find">Tìm đồ</SelectItem>
+              <SelectItem value="found">Tìm đồ</SelectItem>
               <SelectItem value="lost">Nhặt đồ</SelectItem>
               <SelectItem value="other">Khác</SelectItem>
             </SelectContent>
@@ -163,7 +165,21 @@ const LostItemForm = ({ onSuccess, onCancel, initialData }) => {
 
       <div>
         <Label htmlFor="location">Địa điểm *</Label>
-        <Input id="location" name="location" value={formData.location} onChange={handleChange} required className="mt-1.5" />
+        <Select value={formData.location} onValueChange={handleLocationChange}>
+          <SelectTrigger className="mt-1.5">
+            <SelectValue placeholder="Chọn địa điểm" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả địa điểm</SelectItem>
+            <SelectItem value="Tòa A">Tòa A</SelectItem>
+            <SelectItem value="Tòa H">Tòa H</SelectItem>
+            <SelectItem value="Tòa E">Tòa E</SelectItem>
+            <SelectItem value="Nhà Xe">Nhà Xe</SelectItem>
+            <SelectItem value="Sân Trường">Sân Trường</SelectItem>
+            <SelectItem value="Tòa F">Tòa F</SelectItem>
+            <SelectItem value="Nơi Khác">Nơi khác</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div>
