@@ -117,6 +117,8 @@ const NotificationsPage = () => {
                 return { icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-100', border: 'border-blue-200' };
             case 'admin_message':
                 return { icon: Info, color: 'text-amber-600', bg: 'bg-amber-100', border: 'border-amber-200' };
+            case 'student_message':
+                return { icon: Info, color: 'text-amber-600', bg: 'bg-amber-100', border: 'border-amber-200' };
             default:
                 return { icon: Bell, color: 'text-slate-500', bg: 'bg-slate-100', border: 'border-slate-200' };
         }

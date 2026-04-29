@@ -39,14 +39,22 @@ const QAPage = () => {
     setLoading(true);
     setError(null);
     try {
+      // 1. Tạo điều kiện lọc (Filter)
+      // Nếu không phải admin, chỉ lấy những câu hỏi có user_id trùng với ID người dùng hiện tại
+      let filter = '';
+      if (userRole !== 'admin') {
+        filter = `user_id = "${currentUser.id}"`;
+      }
+
       const result = await pb.collection('questions').getList(1, 50, {
         sort: '-created_at',
+        filter: filter, // Áp dụng filter vào đây
         $autoCancel: false,
       });
 
       setQuestions(result.items);
 
-      // Fetch users for these questions
+      // Fetch users cho các câu hỏi này
       const userIds = [...new Set(result.items.map(q => q.user_id))];
       if (userIds.length > 0) {
         const usersData = await pb.collection('users').getFullList({
@@ -58,16 +66,24 @@ const QAPage = () => {
         setUsersMap(map);
       }
 
-      // Fetch answer counts
-      const allAnswers = await pb.collection('answers').getFullList({
-        fields: 'question_id',
-        $autoCancel: false,
-      });
-      const counts = {};
-      allAnswers.forEach(a => {
-        counts[a.question_id] = (counts[a.question_id] || 0) + 1;
-      });
-      setAnswerCounts(counts);
+      // Fetch answer counts 
+      // Tối ưu: Chỉ đếm câu trả lời của những câu hỏi đang hiển thị để bảo mật và hiệu năng
+      const questionIdsFilter = result.items.map(q => `question_id="${q.id}"`).join(' || ');
+
+      if (result.items.length > 0) {
+        const relevantAnswers = await pb.collection('answers').getFullList({
+          filter: questionIdsFilter,
+          fields: 'question_id',
+          $autoCancel: false,
+        });
+        const counts = {};
+        relevantAnswers.forEach(a => {
+          counts[a.question_id] = (counts[a.question_id] || 0) + 1;
+        });
+        setAnswerCounts(counts);
+      } else {
+        setAnswerCounts({});
+      }
 
     } catch (err) {
       console.error('Error fetching questions:', err);
@@ -75,7 +91,7 @@ const QAPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUser.id, userRole]); // Thêm dependency để hàm nhận diện được user thay đổi
 
   useEffect(() => {
     fetchQuestions();
