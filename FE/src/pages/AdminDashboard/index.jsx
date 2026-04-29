@@ -9,7 +9,7 @@ import AdminNotificationModal from '@/components/AdminNotificationModal.jsx';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { CheckCircle, XCircle, Trash2, Package, Clock, ThumbsUp, ThumbsDown, MapPin, Calendar, Phone, Mail, HelpCircle, Send } from 'lucide-react';
+import { CheckCircle, XCircle, Trash2, Package, Search, Clock, ThumbsUp, ThumbsDown, MapPin, Calendar, Phone, Mail, HelpCircle, Send } from 'lucide-react';
 import { format } from 'date-fns';
 
 const AdminDashboard = () => {
@@ -21,7 +21,7 @@ const AdminDashboard = () => {
         total: 0,
         approved: 0,
         pending: 0,
-        rejected: 0,
+        complete: 0,
     });
 
     const fetchItems = async () => {
@@ -41,7 +41,7 @@ const AdminDashboard = () => {
                 total: allItems.length,
                 approved: allItems.filter(item => item.status === 'approved').length,
                 pending: allItems.filter(item => item.status === 'pending').length,
-                rejected: allItems.filter(item => item.status === 'rejected').length,
+                complete: allItems.filter(item => item.status === 'complete').length,
             });
         } catch (error) {
             console.error('Error fetching items:', error);
@@ -79,6 +79,17 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleComplete = async (id) => {
+        try {
+            await pb.collection('lost_items').update(id, { status: 'complete' }, { $autoCancel: false });
+            toast.success('Bài đăng đã hoàn thành');
+            fetchItems();
+        } catch (error) {
+            console.error('Error complete item:', error);
+            toast.error('Không thể hoàn thành bài đăng');
+        }
+    };
+
     const handleDelete = async (id) => {
         if (!window.confirm('Bạn có chắc muốn xóa bài đăng này?')) {
             return;
@@ -99,6 +110,7 @@ const AdminDashboard = () => {
             pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Chờ duyệt', icon: Clock },
             approved: { bg: 'bg-green-100', text: 'text-green-700', label: 'Đã duyệt', icon: CheckCircle },
             rejected: { bg: 'bg-red-100', text: 'text-red-700', label: 'Từ chối', icon: XCircle },
+            complete: { bg: 'bg-green-100', text: 'text-green-900', label: 'Hoàn thành', icon: CheckCircle },
         };
         const badge = badges[status];
         const Icon = badge.icon;
@@ -157,7 +169,8 @@ const AdminDashboard = () => {
                             <StatCard icon={Package} label="Tổng số bài" value={stats.total} color="bg-blue-600" />
                             <StatCard icon={CheckCircle} label="Đã duyệt" value={stats.approved} color="bg-green-600" />
                             <StatCard icon={Clock} label="Chờ duyệt" value={stats.pending} color="bg-yellow-600" />
-                            <StatCard icon={XCircle} label="Từ chối" value={stats.rejected} color="bg-red-600" />
+                            <StatCard icon={XCircle} label="Hoàn thành" value={stats.complete} color="bg-red-600" />
+
                         </div>
 
                         {/* Search and Filter */}
@@ -213,6 +226,16 @@ const AdminDashboard = () => {
 
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-600">
                                                         <div className="flex items-center gap-2">
+                                                            {item.category === 'lost' && <Search className="w-4 h-4 text-orange-500" />}
+                                                            {item.category === 'found' && <Package className="w-4 h-4 text-green-500" />}
+                                                            {item.category === 'other' && <HelpCircle className="w-4 h-4 text-blue-500" />}
+
+                                                            <span className="capitalize">
+                                                                {item.category === 'lost' ? 'Mất đồ' :
+                                                                    item.category === 'found' ? 'Tìm thấy' : 'Khác'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
                                                             <MapPin className="w-4 h-4 flex-shrink-0" />
                                                             <span>{item.location}</span>
                                                         </div>
@@ -257,6 +280,7 @@ const AdminDashboard = () => {
                                                                 <ThumbsUp className="w-4 h-4" />
                                                                 Phê duyệt
                                                             </Button>
+
                                                             <Button
                                                                 onClick={() => handleReject(item.id)}
                                                                 variant="outline"
@@ -287,6 +311,13 @@ const AdminDashboard = () => {
                                                             Phê duyệt lại
                                                         </Button>
                                                     )}
+                                                    <Button
+                                                        onClick={() => handleComplete(item.id)}
+                                                        className="gap-2 bg-green-600 hover:bg-green-700"
+                                                    >
+                                                        <ThumbsUp className="w-4 h-4" />
+                                                        Hoàn Thành
+                                                    </Button>
 
                                                     <Button
                                                         onClick={() => setNotifyingItem(item)}

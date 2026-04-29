@@ -93,7 +93,7 @@ const AdminSearchAndFilterBar = ({ items, onFilterChange, resultCount }) => {
                             <SelectItem value="all">Tất cả trạng thái</SelectItem>
                             <SelectItem value="pending">Chờ duyệt</SelectItem>
                             <SelectItem value="approved">Đã duyệt</SelectItem>
-                            <SelectItem value="rejected">Từ chối</SelectItem>
+                            <SelectItem value="complete">Hoàn thành</SelectItem>
                         </SelectContent>
                     </Select>
 
