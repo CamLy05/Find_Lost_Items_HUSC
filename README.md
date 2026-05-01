@@ -29,14 +29,6 @@ Date Management: Date-fns.
 
 Notifications: Sonner (Toast notifications).
 
-📂 Cấu trúc thư mục tiêu biểu
-Plaintext
-src/
-├── components/       # Các component dùng chung (Header, Footer, Modals...)
-├── context/          # AppContext để quản lý Auth và UserRole
-├── lib/              # Cấu hình PocketBase (pocketbase.js)
-├── pages/            # Các trang chính (Dashboard, QAPage, Notifications...)
-└── ui/               # Các component giao diện cơ bản từ Shadcn/UI
 ⚙️ Cài đặt và Chạy dự án
 1. Cài đặt Backend (PocketBase)
 Tải PocketBase tại pocketbase.io.
