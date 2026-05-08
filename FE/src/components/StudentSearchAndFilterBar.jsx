@@ -100,6 +100,7 @@ const StudentSearchAndFilterBar = ({ items, onFilterChange, resultCount }) => {
                             <SelectItem value="Giấy tờ">Giấy tờ</SelectItem>
                             <SelectItem value="Điện thoại">Điện thoại</SelectItem>
                             <SelectItem value="Khác">Khác</SelectItem>
+                            <SelectItem value="Balo">Balo</SelectItem>
                         </SelectContent>
                     </Select>
 
